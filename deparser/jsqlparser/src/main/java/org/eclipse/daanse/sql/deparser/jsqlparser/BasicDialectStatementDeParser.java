@@ -14,14 +14,22 @@
 package org.eclipse.daanse.sql.deparser.jsqlparser;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.jdbc.db.dialect.api.IdentifierQuotingPolicy;
 
 import net.sf.jsqlparser.util.deparser.StatementDeParser;
 
 public class BasicDialectStatementDeParser extends StatementDeParser {
 
-    public BasicDialectStatementDeParser(StringBuilder buffer, Dialect dialect) {
+    public static final IdentifierQuotingPolicy DEFAULT_QUOTING_POLICY = IdentifierQuotingPolicy.WHEN_NEEDED;
 
-        super(createExpressionDeParser(dialect, buffer), createSelectDeParser(buffer, dialect), buffer);
+    public BasicDialectStatementDeParser(StringBuilder buffer, Dialect dialect) {
+        this(buffer, dialect, DEFAULT_QUOTING_POLICY);
+    }
+
+    public BasicDialectStatementDeParser(StringBuilder buffer, Dialect dialect, IdentifierQuotingPolicy quotingPolicy) {
+
+        super(createExpressionDeParser(dialect, buffer, quotingPolicy),
+                createSelectDeParser(buffer, dialect, quotingPolicy), buffer);
 
         BasicDialectSelectDeParser selectDeParser = (BasicDialectSelectDeParser) getSelectDeParser();
         BasicDialectExpressionDeParser expressionDeParser = (BasicDialectExpressionDeParser) getExpressionDeParser();
@@ -29,12 +37,14 @@ public class BasicDialectStatementDeParser extends StatementDeParser {
         expressionDeParser.setSelectVisitor(selectDeParser);
     }
 
-    private static BasicDialectExpressionDeParser createExpressionDeParser(Dialect dialect, StringBuilder buffer) {
-        return new BasicDialectExpressionDeParser(dialect);
+    private static BasicDialectExpressionDeParser createExpressionDeParser(Dialect dialect, StringBuilder buffer,
+            IdentifierQuotingPolicy quotingPolicy) {
+        return new BasicDialectExpressionDeParser(dialect, quotingPolicy);
     }
 
-    private static BasicDialectSelectDeParser createSelectDeParser(StringBuilder buffer, Dialect dialect) {
-        return new BasicDialectSelectDeParser(buffer, dialect);
+    private static BasicDialectSelectDeParser createSelectDeParser(StringBuilder buffer, Dialect dialect,
+            IdentifierQuotingPolicy quotingPolicy) {
+        return new BasicDialectSelectDeParser(buffer, dialect, quotingPolicy);
     }
 
 }

@@ -14,6 +14,7 @@
 package org.eclipse.daanse.sql.deparser.jsqlparser;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.jdbc.db.dialect.api.IdentifierQuotingPolicy;
 
 import net.sf.jsqlparser.expression.DateValue;
 import net.sf.jsqlparser.expression.DoubleValue;
@@ -28,18 +29,32 @@ import net.sf.jsqlparser.util.deparser.ExpressionDeParser;
 
 public class BasicDialectExpressionDeParser extends ExpressionDeParser {
 
+    public static final IdentifierQuotingPolicy DEFAULT_QUOTING_POLICY = IdentifierQuotingPolicy.WHEN_NEEDED;
+
     private final Dialect dialect;
+    private final IdentifierQuotingPolicy quotingPolicy;
 
     public BasicDialectExpressionDeParser(Dialect dialect) {
+        this(dialect, DEFAULT_QUOTING_POLICY);
+    }
+
+    public BasicDialectExpressionDeParser(Dialect dialect, IdentifierQuotingPolicy quotingPolicy) {
         super();
         this.builder = new StringBuilder();
         this.dialect = dialect;
+        this.quotingPolicy = quotingPolicy == null ? DEFAULT_QUOTING_POLICY : quotingPolicy;
     }
 
     public BasicDialectExpressionDeParser(SelectVisitor<StringBuilder> selectVisitor, StringBuilder buffer,
             Dialect dialect) {
+        this(selectVisitor, buffer, dialect, DEFAULT_QUOTING_POLICY);
+    }
+
+    public BasicDialectExpressionDeParser(SelectVisitor<StringBuilder> selectVisitor, StringBuilder buffer,
+            Dialect dialect, IdentifierQuotingPolicy quotingPolicy) {
         super(selectVisitor, buffer);
         this.dialect = dialect;
+        this.quotingPolicy = quotingPolicy == null ? DEFAULT_QUOTING_POLICY : quotingPolicy;
     }
 
     // Identifier Quoting
@@ -58,10 +73,9 @@ public class BasicDialectExpressionDeParser extends ExpressionDeParser {
         }
 
         if (tableName != null && !tableName.isEmpty()) {
-            dialect.quoteIdentifier(builder, tableName, tableColumn.getColumnName());
-        } else {
-            dialect.quoteIdentifier(builder, tableColumn.getColumnName());
+            builder.append(tableName).append('.');
         }
+        dialect.quoteIdentifierWith(tableColumn.getColumnName(), builder, quotingPolicy);
 
         if (tableColumn.getArrayConstructor() != null) {
             tableColumn.getArrayConstructor().accept(this, context);

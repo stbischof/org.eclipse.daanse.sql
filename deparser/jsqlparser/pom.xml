@@ -45,5 +45,13 @@
       <artifactId>jsqlparser</artifactId>
       <version>5.3.167</version>
     </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.service.component.annotations</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>org.osgi.service.metatype.annotations</artifactId>
+    </dependency>
   </dependencies>
 </project>

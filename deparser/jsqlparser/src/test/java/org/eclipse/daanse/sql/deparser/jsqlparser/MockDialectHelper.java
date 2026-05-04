@@ -20,8 +20,27 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.jdbc.db.dialect.api.IdentifierQuotingPolicy;
 
 public class MockDialectHelper {
+
+    /**
+     * WHEN_NEEDED heuristic for tests: quote when the identifier contains an
+     * uppercase letter or anything other than [A-Za-z0-9_]. Plain lowercase
+     * names like "col1", "id", "t1" stay unquoted; mixed-case names like
+     * "OrderQuantity" or "Fact" get quoted.
+     */
+    private static boolean needsQuotingForTest(String val) {
+        if (val == null || val.isEmpty())
+            return true;
+        for (int i = 0; i < val.length(); i++) {
+            char c = val.charAt(i);
+            boolean trivial = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_';
+            if (!trivial)
+                return true;
+        }
+        return false;
+    }
 
     public static Dialect createAnsiDialect() {
         return createDialectWithQuote("\"");
@@ -76,6 +95,25 @@ public class MockDialectHelper {
             }
             return null;
         }).when(dialect).quoteIdentifier(any(StringBuilder.class), (String[]) any());
+
+        doAnswer(inv -> {
+            String val = inv.getArgument(0);
+            StringBuilder buf = inv.getArgument(1);
+            IdentifierQuotingPolicy policy = inv.getArgument(2);
+            if (val == null)
+                return null;
+            boolean quote = switch (policy == null ? IdentifierQuotingPolicy.ALWAYS : policy) {
+            case NEVER -> false;
+            case ALWAYS -> true;
+            case WHEN_NEEDED -> needsQuotingForTest(val);
+            };
+            if (quote) {
+                buf.append("[").append(val).append("]");
+            } else {
+                buf.append(val);
+            }
+            return null;
+        }).when(dialect).quoteIdentifierWith(anyString(), any(StringBuilder.class), any(IdentifierQuotingPolicy.class));
 
         doAnswer(inv -> {
             StringBuilder buf = inv.getArgument(0);
@@ -165,6 +203,25 @@ public class MockDialectHelper {
             }
             return null;
         }).when(dialect).quoteIdentifier(any(StringBuilder.class), (String[]) any());
+
+        doAnswer(inv -> {
+            String val = inv.getArgument(0);
+            StringBuilder buf = inv.getArgument(1);
+            IdentifierQuotingPolicy policy = inv.getArgument(2);
+            if (val == null)
+                return null;
+            boolean quote = switch (policy == null ? IdentifierQuotingPolicy.ALWAYS : policy) {
+            case NEVER -> false;
+            case ALWAYS -> true;
+            case WHEN_NEEDED -> needsQuotingForTest(val);
+            };
+            if (quote) {
+                buf.append(quoteChar).append(val).append(quoteChar);
+            } else {
+                buf.append(val);
+            }
+            return null;
+        }).when(dialect).quoteIdentifierWith(anyString(), any(StringBuilder.class), any(IdentifierQuotingPolicy.class));
 
         doAnswer(inv -> {
             StringBuilder buf = inv.getArgument(0);

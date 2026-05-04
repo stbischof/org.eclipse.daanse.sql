@@ -14,6 +14,7 @@
 package org.eclipse.daanse.sql.deparser.jsqlparser;
 
 import org.eclipse.daanse.jdbc.db.dialect.api.Dialect;
+import org.eclipse.daanse.jdbc.db.dialect.api.IdentifierQuotingPolicy;
 
 import net.sf.jsqlparser.expression.Alias;
 import net.sf.jsqlparser.expression.ExpressionVisitor;
@@ -23,17 +24,31 @@ import net.sf.jsqlparser.util.deparser.SelectDeParser;
 
 public class BasicDialectSelectDeParser extends SelectDeParser {
 
+    public static final IdentifierQuotingPolicy DEFAULT_QUOTING_POLICY = IdentifierQuotingPolicy.WHEN_NEEDED;
+
     private final Dialect dialect;
+    private final IdentifierQuotingPolicy quotingPolicy;
 
     public BasicDialectSelectDeParser(StringBuilder buffer, Dialect dialect) {
+        this(buffer, dialect, DEFAULT_QUOTING_POLICY);
+    }
+
+    public BasicDialectSelectDeParser(StringBuilder buffer, Dialect dialect, IdentifierQuotingPolicy quotingPolicy) {
         super(buffer);
         this.dialect = dialect;
+        this.quotingPolicy = quotingPolicy == null ? DEFAULT_QUOTING_POLICY : quotingPolicy;
     }
 
     public BasicDialectSelectDeParser(ExpressionVisitor<StringBuilder> expressionVisitor, StringBuilder buffer,
             Dialect dialect) {
+        this(expressionVisitor, buffer, dialect, DEFAULT_QUOTING_POLICY);
+    }
+
+    public BasicDialectSelectDeParser(ExpressionVisitor<StringBuilder> expressionVisitor, StringBuilder buffer,
+            Dialect dialect, IdentifierQuotingPolicy quotingPolicy) {
         super(expressionVisitor, buffer);
         this.dialect = dialect;
+        this.quotingPolicy = quotingPolicy == null ? DEFAULT_QUOTING_POLICY : quotingPolicy;
     }
 
     @Override
@@ -44,17 +59,17 @@ public class BasicDialectSelectDeParser extends SelectDeParser {
         String tableName = table.getName();
 
         if (catalog != null && !catalog.isEmpty()) {
-            dialect.quoteIdentifier(builder, catalog);
+            dialect.quoteIdentifierWith(catalog, builder, quotingPolicy);
             builder.append(".");
         }
 
         if (schema != null && !schema.isEmpty()) {
-            dialect.quoteIdentifier(builder, schema);
+            dialect.quoteIdentifierWith(schema, builder, quotingPolicy);
             builder.append(".");
         }
 
         if (tableName != null) {
-            dialect.quoteIdentifier(builder, tableName);
+            dialect.quoteIdentifierWith(tableName, builder, quotingPolicy);
         }
 
         // Handle table alias
