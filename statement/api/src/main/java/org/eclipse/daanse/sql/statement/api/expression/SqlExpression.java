@@ -78,11 +78,20 @@ public sealed interface SqlExpression {
     /**
      * A binary arithmetic expression, e.g. {@code price * quantity}.
      *
-     * @param left     left operand
-     * @param operator the arithmetic operator
-     * @param right    right operand
+     * @param left          left operand
+     * @param operator      the arithmetic operator
+     * @param right         right operand
+     * @param parenthesized whether the rendered expression is wrapped in parentheses; {@code true} for a
+     *                      standalone binary (the safe default), {@code false} for an infix fragment that is
+     *                      already inside an enclosing context (e.g. {@code sum(a / b)}) and must not gain
+     *                      an extra paren pair
      */
-    record Binary(SqlExpression left, ArithmeticOperator operator, SqlExpression right) implements SqlExpression {
+    record Binary(SqlExpression left, ArithmeticOperator operator, SqlExpression right, boolean parenthesized)
+            implements SqlExpression {
+        /** Backward-compatible constructor: parenthesized by default. */
+        public Binary(SqlExpression left, ArithmeticOperator operator, SqlExpression right) {
+            this(left, operator, right, true);
+        }
     }
 
     /**

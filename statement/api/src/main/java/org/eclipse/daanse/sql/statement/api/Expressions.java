@@ -134,6 +134,15 @@ public final class Expressions {
         return new SqlExpression.Binary(left, operator, right);
     }
 
+    /**
+     * A binary arithmetic expression that renders WITHOUT enclosing parentheses — for infix fragments already
+     * inside an enclosing context (e.g. the {@code a / b} inside {@code sum(a / b)}), where the standalone
+     * {@link #arithmetic} form's outer parens would be incorrect.
+     */
+    public static SqlExpression infix(SqlExpression left, ArithmeticOperator operator, SqlExpression right) {
+        return new SqlExpression.Binary(left, operator, right, false);
+    }
+
     public static SqlExpression add(SqlExpression left, SqlExpression right) {
         return arithmetic(left, ArithmeticOperator.ADD, right);
     }

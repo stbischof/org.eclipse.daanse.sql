@@ -401,8 +401,9 @@ public final class DialectSqlRenderer implements SqlRenderer {
                     + a.arguments().stream().map(this::renderExpression).collect(Collectors.joining(", ")) + ")";
         }
         if (e instanceof SqlExpression.Binary b) {
-            return "(" + renderExpression(b.left()) + " " + b.operator().symbol() + " " + renderExpression(b.right())
-                    + ")";
+            String rendered = renderExpression(b.left()) + " " + b.operator().symbol() + " "
+                    + renderExpression(b.right());
+            return b.parenthesized() ? "(" + rendered + ")" : rendered;
         }
         if (e instanceof SqlExpression.Case c) {
             StringBuilder sb = new StringBuilder("case");
