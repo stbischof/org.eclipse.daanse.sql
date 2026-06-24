@@ -286,6 +286,11 @@ public final class DialectSqlRenderer implements SqlRenderer {
             return "(" + r.sql() + ")" + (dialect.allowsFromAlias() ? " as " : " ")
                     + dialect.quoteIdentifier(r.alias().name());
         }
+        if (from instanceof FromClause.FromVariant v) {
+            // Resolve the per-dialect map here (the one render-time pick), then render exactly like FromRaw.
+            return "(" + chooseVariant(v.byDialectName()) + ")" + (dialect.allowsFromAlias() ? " as " : " ")
+                    + dialect.quoteIdentifier(v.alias().name());
+        }
         if (from instanceof FromClause.FromProduct prod) {
             // Comma product: no predicate of its own — the caller put any join conditions in WHERE.
             return prod.items().stream().map(item -> renderFrom(item, whereSink, options))
@@ -307,6 +312,25 @@ public final class DialectSqlRenderer implements SqlRenderer {
             return left + fmtKw(", ", options) + right;
         }
         throw new IllegalArgumentException("unsupported from clause: " + from);
+    }
+
+    /**
+     * Resolve a per-dialect SQL-fragment map to the fragment for this renderer's dialect. The one render-time
+     * dialect pick for {@link FromClause.FromVariant} (and any future expression variant) — a 1:1 lift of the
+     * legacy {@code ViewCodeSet.chooseQuery} fallback: the live dialect's entry, else {@code "generic"}, else
+     * an error.
+     */
+    private String chooseVariant(java.util.Map<String, String> byDialectName) {
+        String picked = byDialectName.get(dialect.name());
+        if (picked != null) {
+            return picked;
+        }
+        String generic = byDialectName.get("generic");
+        if (generic == null) {
+            throw new IllegalArgumentException(
+                    "no SQL variant for dialect '" + dialect.name() + "' and no 'generic' fallback");
+        }
+        return generic;
     }
 
     // ---- GROUP BY --------------------------------------------------------------

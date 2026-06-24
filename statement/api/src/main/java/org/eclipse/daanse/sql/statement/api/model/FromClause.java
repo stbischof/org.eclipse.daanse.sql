@@ -63,6 +63,21 @@ public sealed interface FromClause {
     }
 
     /**
+     * The multi-variant sibling of {@link FromRaw}: a derived table whose body SQL is chosen per dialect at
+     * render time. Carries the whole {@code dialect-name -> pre-rendered SQL} map (author-written per-engine
+     * fragments — e.g. a mapping view with several {@code <SQL dialect="..."/>} entries) instead of a single
+     * already-picked string, so the {@code Statement} no longer encodes a dialect choice and stays cache-safe.
+     * The renderer resolves the map ({@code dialect.name()} else {@code "generic"}) and renders it exactly like
+     * {@link FromRaw}.
+     *
+     * @param byDialectName the {@code dialect-name -> SQL} variants (must contain the live dialect or
+     *                      {@code "generic"})
+     * @param alias         the derived-table alias
+     */
+    record FromVariant(Map<String, String> byDialectName, TableAlias alias) implements FromClause {
+    }
+
+    /**
      * A join of two from-clauses.
      *
      * @param left  the left input
