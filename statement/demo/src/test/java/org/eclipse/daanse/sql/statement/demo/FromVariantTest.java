@@ -67,4 +67,32 @@ class FromVariantTest {
         Dialect mysql = new MySqlDialect();
         assertEquals(renderRaw(mysql, MYSQL), renderVariant(mysql));
     }
+
+    // ---- RawVariant (SELECT-side computed-column expression) -----------------------------------------
+
+    private String renderProjVariant(Dialect d) {
+        SelectStatementBuilder q = SelectStatementBuilder.create();
+        q.from(From.table("t", V));
+        q.project(Expressions.rawVariant(VARIANTS), BestFitColumnType.STRING);
+        return new DialectSqlRenderer(d).render(q.build()).sql();
+    }
+
+    private String renderProjRaw(Dialect d, String sql) {
+        SelectStatementBuilder q = SelectStatementBuilder.create();
+        q.from(From.table("t", V));
+        q.project(Expressions.raw(sql), BestFitColumnType.STRING);
+        return new DialectSqlRenderer(d).render(q.build()).sql();
+    }
+
+    @Test
+    void rawVariantFallsBackToGenericForNonMatchingDialect() {
+        Dialect ansi = new AnsiDialect();
+        assertEquals(renderProjRaw(ansi, GENERIC), renderProjVariant(ansi));
+    }
+
+    @Test
+    void rawVariantPicksDialectSpecificForMysql() {
+        Dialect mysql = new MySqlDialect();
+        assertEquals(renderProjRaw(mysql, MYSQL), renderProjVariant(mysql));
+    }
 }

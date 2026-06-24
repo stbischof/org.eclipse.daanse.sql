@@ -445,6 +445,9 @@ public final class DialectSqlRenderer implements SqlRenderer {
         if (e instanceof SqlExpression.Raw r) {
             return r.sql();
         }
+        if (e instanceof SqlExpression.RawVariant v) {
+            return chooseVariant(v.byDialectName());
+        }
         throw new IllegalArgumentException("unsupported expression: " + e);
     }
 

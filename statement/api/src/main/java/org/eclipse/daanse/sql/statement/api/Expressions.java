@@ -66,6 +66,15 @@ public final class Expressions {
         return new SqlExpression.Raw(sql);
     }
 
+    /**
+     * A per-dialect SQL fragment chosen at render time — the multi-variant sibling of {@link #raw(String)} for
+     * computed columns / measure expressions whose SQL differs per engine. The renderer resolves the
+     * {@code dialect-name -> SQL} map (live dialect else {@code "generic"}).
+     */
+    public static SqlExpression rawVariant(java.util.Map<String, String> byDialectName) {
+        return new SqlExpression.RawVariant(byDialectName);
+    }
+
     /** A bind parameter carrying an immediate value (rendered as a placeholder, bound by the executor). */
     public static SqlExpression param(Object value, Datatype datatype) {
         return new SqlExpression.Param(value, true, datatype);

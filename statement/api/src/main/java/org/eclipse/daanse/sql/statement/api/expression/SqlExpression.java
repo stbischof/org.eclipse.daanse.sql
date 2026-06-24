@@ -127,4 +127,18 @@ public sealed interface SqlExpression {
      */
     record Raw(String sql) implements SqlExpression {
     }
+
+    /**
+     * The multi-variant sibling of {@link Raw}: a pre-rendered SQL fragment chosen per dialect at render time.
+     * Carries the whole {@code dialect-name -> SQL} map (author-written per-engine fragments — e.g. a computed
+     * column / measure expression with several {@code <SQL dialect="..."/>} entries) instead of a single
+     * already-picked string, so the expression stays dialect-free and the {@code Statement} stays cache-safe.
+     * The renderer resolves the map ({@code dialect.name()} else {@code "generic"}) and emits it verbatim like
+     * {@link Raw}.
+     *
+     * @param byDialectName the {@code dialect-name -> SQL} variants (must contain the live dialect or
+     *                      {@code "generic"})
+     */
+    record RawVariant(java.util.Map<String, String> byDialectName) implements SqlExpression {
+    }
 }
