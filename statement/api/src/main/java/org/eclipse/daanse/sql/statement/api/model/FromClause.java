@@ -30,6 +30,16 @@ import org.eclipse.daanse.sql.statement.api.expression.Predicate;
 public sealed interface FromClause {
 
     /**
+     * A FROM item that carries a single query-local table {@link TableAlias} — a leaf table, sub-query, or
+     * pre-rendered/variant fragment — as opposed to {@link FromJoin}/{@link FromProduct}, which compose other
+     * items and have no single alias of their own. Lets callers resolve a from-item's alias with one
+     * {@code instanceof Aliased} rather than enumerating every leaf variant.
+     */
+    sealed interface Aliased extends FromClause permits FromTable, FromSubquery, FromRaw, FromVariant {
+        TableAlias alias();
+    }
+
+    /**
      * A base table reference.
      *
      * @param table  the (optionally schema-qualified) table, as the shared jdbc.db identifier
@@ -38,7 +48,7 @@ public sealed interface FromClause {
      * @param hints  optimizer hints (dialect-specific; may be empty)
      */
     record FromTable(TableReference table, TableAlias alias, Optional<Predicate> filter,
-            Map<String, String> hints) implements FromClause {
+            Map<String, String> hints) implements Aliased {
     }
 
     /**
@@ -47,7 +57,7 @@ public sealed interface FromClause {
      * @param query the sub-query
      * @param alias the derived-table alias
      */
-    record FromSubquery(SelectStatement query, TableAlias alias) implements FromClause {
+    record FromSubquery(SelectStatement query, TableAlias alias) implements Aliased {
     }
 
     /**
@@ -59,7 +69,7 @@ public sealed interface FromClause {
      * @param sql   the derived-table body SQL (without surrounding parentheses)
      * @param alias the derived-table alias
      */
-    record FromRaw(String sql, TableAlias alias) implements FromClause {
+    record FromRaw(String sql, TableAlias alias) implements Aliased {
     }
 
     /**
@@ -74,7 +84,7 @@ public sealed interface FromClause {
      *                      {@code "generic"})
      * @param alias         the derived-table alias
      */
-    record FromVariant(Map<String, String> byDialectName, TableAlias alias) implements FromClause {
+    record FromVariant(Map<String, String> byDialectName, TableAlias alias) implements Aliased {
     }
 
     /**
