@@ -29,6 +29,16 @@ import org.eclipse.daanse.jdbc.db.dialect.api.type.Datatype;
 public sealed interface SqlExpression {
 
     /**
+     * A function or aggregate invocation — a name plus argument expressions. Shared by {@link Function} and
+     * {@link Aggregate} (which additionally carries a {@code distinct} flag); lets a caller match any call with
+     * one {@code instanceof Call} (e.g. "find every {@code COUNT(...)}").
+     */
+    sealed interface Call extends SqlExpression permits Function, Aggregate {
+        String name();
+        List<SqlExpression> arguments();
+    }
+
+    /**
      * A column reference, optionally qualified by a table alias.
      *
      * @param tableQualifier the table alias (its raw name), or empty for an unqualified column
@@ -52,7 +62,10 @@ public sealed interface SqlExpression {
      * @param name      the function name (rendered verbatim, upper-case by convention)
      * @param arguments the argument expressions
      */
-    record Function(String name, List<SqlExpression> arguments) implements SqlExpression {
+    record Function(String name, List<SqlExpression> arguments) implements Call {
+        public Function {
+            arguments = List.copyOf(arguments);
+        }
     }
 
     /**
@@ -66,7 +79,7 @@ public sealed interface SqlExpression {
      * @param distinct  whether the {@code DISTINCT} qualifier precedes the arguments
      * @param arguments the argument expressions (at least one)
      */
-    record Aggregate(String name, boolean distinct, List<SqlExpression> arguments) implements SqlExpression {
+    record Aggregate(String name, boolean distinct, List<SqlExpression> arguments) implements Call {
         public Aggregate {
             if (arguments == null || arguments.isEmpty()) {
                 throw new IllegalArgumentException("Aggregate requires at least one argument");

@@ -59,12 +59,20 @@ public sealed interface Predicate {
     record Not(Predicate operand) implements Predicate {
     }
 
+    /**
+     * An n-ary boolean connective over operands — {@link And} or {@link Or}. Lets the renderer (and any
+     * predicate normalizer) treat both uniformly via one {@code instanceof Connective}.
+     */
+    sealed interface Connective extends Predicate permits And, Or {
+        List<Predicate> operands();
+    }
+
     /** Conjunction of operands ({@code AND}). An empty list is treated as always-true. */
-    record And(List<Predicate> operands) implements Predicate {
+    record And(List<Predicate> operands) implements Connective {
     }
 
     /** Disjunction of operands ({@code OR}). An empty list is treated as always-false. */
-    record Or(List<Predicate> operands) implements Predicate {
+    record Or(List<Predicate> operands) implements Connective {
     }
 
     /** A pre-rendered predicate fragment, emitted verbatim. */

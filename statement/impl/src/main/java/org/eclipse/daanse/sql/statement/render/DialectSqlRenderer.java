@@ -416,13 +416,10 @@ public final class DialectSqlRenderer implements SqlRenderer {
             dialect.quote(b, l.value(), l.datatype());
             return b.toString();
         }
-        if (e instanceof SqlExpression.Function f) {
-            return f.name() + "("
-                    + f.arguments().stream().map(this::renderExpression).collect(Collectors.joining(", ")) + ")";
-        }
-        if (e instanceof SqlExpression.Aggregate a) {
-            return a.name() + "(" + (a.distinct() ? "distinct " : "")
-                    + a.arguments().stream().map(this::renderExpression).collect(Collectors.joining(", ")) + ")";
+        if (e instanceof SqlExpression.Call c) {
+            boolean distinct = c instanceof SqlExpression.Aggregate a && a.distinct();
+            return c.name() + "(" + (distinct ? "distinct " : "")
+                    + c.arguments().stream().map(this::renderExpression).collect(Collectors.joining(", ")) + ")";
         }
         if (e instanceof SqlExpression.Binary b) {
             String rendered = renderExpression(b.left()) + " " + b.operator().symbol() + " "
@@ -489,17 +486,12 @@ public final class DialectSqlRenderer implements SqlRenderer {
         if (p instanceof Predicate.Not not) {
             return "not (" + renderPredicate(not.operand()) + ")";
         }
-        if (p instanceof Predicate.And a) {
-            if (a.operands().isEmpty()) {
-                return "1 = 1";
+        if (p instanceof Predicate.Connective conn) {
+            boolean and = conn instanceof Predicate.And;
+            if (conn.operands().isEmpty()) {
+                return and ? "1 = 1" : "1 = 0";
             }
-            return "(" + renderPredicateList(a.operands(), " and ") + ")";
-        }
-        if (p instanceof Predicate.Or o) {
-            if (o.operands().isEmpty()) {
-                return "1 = 0";
-            }
-            return "(" + renderPredicateList(o.operands(), " or ") + ")";
+            return "(" + renderPredicateList(conn.operands(), and ? " and " : " or ") + ")";
         }
         if (p instanceof Predicate.Raw r) {
             return r.sql();
